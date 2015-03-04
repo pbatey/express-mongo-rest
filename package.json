@@ -1,0 +1,29 @@
+{
+  "name": "express-mongodb-rest",
+  "version": "0.1.0",
+  "description": "An mongodb-backed RESTful express route.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/pbatey/express-mongodb-rest"
+  },
+  "author": "Phil Batey <pbatey@gmail.com>",
+  "license": "MIT License",
+  "devDependencies": {
+    "chai": "^2.1.0",
+    "mocha": "^2.1.0",
+    "morgan": "^1.5.1",
+    "supertest": "^0.15.0"
+  },
+  "scripts": {
+    "test": "node_modules/mocha/bin/mocha"
+  },
+  "dependencies": {
+    "body-parser": "^1.12.0",
+    "express": "^4.12.0",
+    "jsonpatch-to-mongodb": "^0.1.1",
+    "mongodb": "^1.4.32",
+    "mongoskin": "^1.4.12",
+    "query-to-mongodb": "0.1.0"
+  }
+}
