@@ -11,8 +11,11 @@
   "license": "MIT License",
   "devDependencies": {
     "chai": "^2.1.0",
+    "compression": "^1.4.1",
+    "method-override": "^2.3.1",
     "mocha": "^2.1.0",
     "morgan": "^1.5.1",
+    "pem": "^1.7.1",
     "supertest": "^0.15.0"
   },
   "scripts": {
