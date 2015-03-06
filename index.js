@@ -5,6 +5,17 @@ var patch2m = require('jsonpatch-to-mongodb')
 var query2m = require('query-to-mongodb')
 var bodyParser = require('body-parser')
 
+module.exports = {
+    Router: function (db, validator) {
+        var router = express.Router()
+        router.use(bodyParser.json())
+        if (validator) router.use(validator)
+        useDb(router, db)
+        addRestMethods(router)
+        return router
+    }
+}
+
 function isEmpty(obj) {
     if (obj == null || obj.length === 0) return true
     if (obj.length > 0) return false
@@ -55,6 +66,7 @@ function addRestMethods(router) {
             if (links) res.links(links)
             req.collection.find(query.criteria, query.options).toArray(function (e, results) {
                 if (e) return next(e)
+                results.forEach(convertId)
                 res.send(results)
             })
         })
@@ -64,7 +76,8 @@ function addRestMethods(router) {
         if (!req.body || isEmpty(req.body)) throw { status: 400, message: 'No Request Body' } // Bad Request
         req.collection.insert(req.body, function (e, result) {
             if (e) return next(e)
-            res.status(201).send(result[0]); // Created
+            res.append('Location', fullUrl(req) + '/' + result[0]._id)
+            res.status(201).send(convertId(result[0])); // Created
         })
     })
 
@@ -88,7 +101,7 @@ function addRestMethods(router) {
         req.collection.findOne(req.idMatch, function (e, result) {
             if (e) return next(e)
             if (!result) res.status(404); // Not Found
-            res.send(result)
+            res.send(convertId(result))
         })
     })
 
@@ -105,7 +118,7 @@ function addRestMethods(router) {
             // and doesn't return a result upon success; but a findOne after will
             req.collection.findOne(req.idMatch, function (e, result) {
                 if (e) return next(e)
-                res.send(result)
+                res.send(convertId(result))
             })
         })
     })
@@ -118,7 +131,7 @@ function addRestMethods(router) {
             // and doesn't return a result upon success; but a findOne after will
             req.collection.findOne(req.idMatch, function (e, result) {
                 if (e) return next(e)
-                res.send(result)
+                res.send(convertId(result))
             })
         })
     })
@@ -135,13 +148,10 @@ function addRestMethods(router) {
     return router
 }
 
-module.exports = {
-    Router: function construct(db, validator) {
-        var router = express.Router()
-        router.use(bodyParser.json())
-        if (validator) router.use(validator)
-        useDb(router, db)
-        addRestMethods(router)
-        return router
+function convertId(obj) {
+    if (obj) {
+        obj.id = obj._id
+        delete obj._id
     }
+    return obj
 }

@@ -53,6 +53,10 @@ describe('express-rest-mongo', function () {
                         if (err) throw err
                         assert.equal(results.length, 2)
                         assert.equal(res.headers['x-total-count'], 2)
+                        assert.ok(results[0].id)
+                        assert.ok(results[1].id)
+                        assert.notOk(results[0]._id)
+                        assert.notOk(results[1]._id)
                         done()
                     })
             })
@@ -90,7 +94,8 @@ describe('express-rest-mongo', function () {
                     .end(function(err, res) {
                         var result = JSON.parse(res.text)
                         if (err) throw err
-                        assert.ok(result._id)
+                        assert.ok(result.id)
+                        assert.notOk(result._id)
                         done()
                     })
             })
@@ -169,7 +174,9 @@ describe('express-rest-mongo', function () {
                     .end(function(err, res) {
                         if (err) throw err
                         var results = JSON.parse(res.text)
+                        assert.equal(results.id, '0001')
                         assert.equal(results.name, 'Bob')
+                        assert.notOk(results._id)
                         done()
                     })
             })
@@ -181,7 +188,9 @@ describe('express-rest-mongo', function () {
                         .end(function(err, res) {
                             if (err) throw err
                             var results = JSON.parse(res.text)
+                            assert.equal(results.id, id)
                             assert.equal(results.name, 'Judy')
+                            assert.notOk(results._id)
                             done()
                         })
                 })
@@ -218,7 +227,8 @@ describe('express-rest-mongo', function () {
                     .end(function(err, res) {
                         var result = JSON.parse(res.text)
                         if (err) throw err
-                        assert.equal(result._id, '0001')
+                        assert.equal(result.id, '0001')
+                        assert.notOk(result._id);
                         db.user.findOne({_id: '0001'}, function (e, result) {
                             assert.equal(result.name, 'Bobby');
                             done()
@@ -235,7 +245,8 @@ describe('express-rest-mongo', function () {
                         .end(function(err, res) {
                             var result = JSON.parse(res.text)
                             if (err) throw err
-                            assert.equal(result._id, id)
+                            assert.equal(result.id, id)
+                            assert.notOk(result._id)
                             db.user.findOne({_id: id}, function (e, result) {
                                 assert.equal(result.name, 'Judith');
                                 done()
@@ -251,7 +262,8 @@ describe('express-rest-mongo', function () {
                     .end(function(err, res) {
                         var result = JSON.parse(res.text)
                         if (err) throw err
-                        assert.equal(result._id, '0002')
+                        assert.equal(result.id, '0002')
+                        assert.notOk(result._id)
                         db.user.findOne({_id: '0002'}, function (e, result) {
                             assert.equal(result.name, 'Carl');
                             done()
@@ -282,7 +294,8 @@ describe('express-rest-mongo', function () {
                     .end(function(err, res) {
                         var result = JSON.parse(res.text)
                         if (err) throw err
-                        assert.equal(result._id, '0001')
+                        assert.equal(result.id, '0001')
+                        assert.notOk(result._id)
                         db.user.findOne({_id: '0001'}, function (e, result) {
                             assert.equal(result.name, 'Bobby');
                             done()
