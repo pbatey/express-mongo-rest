@@ -4,16 +4,32 @@ var ObjectID = require('mongodb').ObjectID
 var patch2m = require('jsonpatch-to-mongodb')
 var query2m = require('query-to-mongodb')
 var bodyParser = require('body-parser')
+var inflector = require('inflection')
 
-module.exports = {
-    Router: function (db, validator) {
-        var router = express.Router()
-        router.use(bodyParser.json())
-        if (validator) router.use(validator)
-        useDb(router, db)
-        addRestMethods(router)
-        return router
-    }
+module.exports = function expressMongodbRest(db, options) {
+    var router
+
+    if (!db) throw new TypeError('db required')
+    if (typeof db === 'string') db = mongoskin.db(db)
+    options = options || {}
+
+    router = express.Router()
+    router.db = db
+
+    router.use(bodyParser.json())
+    router.use(function (req, res, next) {
+        req.db = router.db
+        res.envelope = options.envelope
+        next()
+    })
+
+    if (options.validator) router.use(options.validator)
+
+    addRestMethods(router, options.singularize || inflector.singularize)
+    router.use('/:collection', convertId)
+    router.use('/:collection', envelope)
+    router.use('/:collection', sendJson)
+    return router
 }
 
 function isEmpty(obj) {
@@ -29,24 +45,16 @@ function fullUrl(req) {
     return req.protocol + '://' + req.get('host') + req.originalUrl
 }
 
-function useDb(router, db) {
-    if (typeof(db) === 'string') db = mongoskin.db(db)
-    router.db = db;
-    router.use(function (req, res, next) {
-        req.db = db
-        next()
-    })
-    return router
-}
-
 function normalizeId(id) {
     if (ObjectID.isValid(id)) return new ObjectID(id)
     return id;
 }
 
-function addRestMethods(router) {
+function addRestMethods(router, singularize) {
     router.param('collection', function collectionParam(req, res, next, collection) {
-        req.collection = req.db.collection(collection)
+        res.locals.plural = collection
+        res.locals.singular = singularize(collection)
+        req.collection = req.db.collection(res.locals.plural)
         next()
     })
 
@@ -56,7 +64,7 @@ function addRestMethods(router) {
     })
 
     router.get('/:collection', function (req, res, next) {
-        var query = query2m(req.query)
+        var query = query2m(req.query, { ignore: 'envelope' })
 
         req.collection.count(query.criteria, function (e, count) {
             var links
@@ -66,8 +74,8 @@ function addRestMethods(router) {
             if (links) res.links(links)
             req.collection.find(query.criteria, query.options).toArray(function (e, results) {
                 if (e) return next(e)
-                results.forEach(convertId)
-                res.send(results)
+                res.locals.json = results
+                next()
             })
         })
     })
@@ -77,36 +85,39 @@ function addRestMethods(router) {
         req.collection.insert(req.body, function (e, result) {
             if (e) return next(e)
             res.append('Location', fullUrl(req) + '/' + result[0]._id)
-            res.status(201).send(convertId(result[0])); // Created
+            res.status(201) // Created
+            res.locals.json = result[0]
+            next()
         })
     })
 
     router.put('/:collection', function (req, res, next) {
         // TODO: bulk update?
-        res.status(405).send(); // Method Not Allowed
+        res.status(405).send() // Method Not Allowed
     })
 
     router.patch('/:collection', function (req, res, next) {
-        res.status(405).send(); // Method Not Allowed
+        res.status(405).send() // Method Not Allowed
     })
 
     router.delete('/:collection', function (req, res, next) {
         req.collection.remove({}, null, function (e, result) {
             if (e) return next(e)
-            res.status(204).send(); // No Content
+            res.status(204).send() // No Content
         })
     })
 
     router.get('/:collection/:id', function (req, res, next) {
         req.collection.findOne(req.idMatch, function (e, result) {
             if (e) return next(e)
-            if (!result) res.status(404); // Not Found
-            res.send(convertId(result))
+            if (!result) res.status(404) // Not Found
+            res.locals.json = result
+            next()
         })
     })
 
     router.post('/:collection/:id', function (req, res, next) {
-        res.status(405).send(); // Method Not Allowed
+        res.status(405).send() // Method Not Allowed
     })
 
     router.put('/:collection/:id', function (req, res, next) {
@@ -118,7 +129,8 @@ function addRestMethods(router) {
             // and doesn't return a result upon success; but a findOne after will
             req.collection.findOne(req.idMatch, function (e, result) {
                 if (e) return next(e)
-                res.send(convertId(result))
+                res.locals.json = result
+                next()
             })
         })
     })
@@ -131,7 +143,8 @@ function addRestMethods(router) {
             // and doesn't return a result upon success; but a findOne after will
             req.collection.findOne(req.idMatch, function (e, result) {
                 if (e) return next(e)
-                res.send(convertId(result))
+                res.locals.json = result
+                next()
             })
         })
     })
@@ -148,10 +161,42 @@ function addRestMethods(router) {
     return router
 }
 
-function convertId(obj) {
+function convertId(req, res, next) {
+    if (res.locals.json instanceof Array) {
+        res.locals.json.forEach(renameIdKey)
+    } else if (res.locals.json) {
+        renameIdKey(res.locals.json)
+    }
+    next()
+}
+
+function renameIdKey(obj) {
     if (obj) {
         obj.id = obj._id
         delete obj._id
     }
     return obj
+}
+
+function isToggled(value, override) {
+    return (override && override === String(!value))
+}
+
+function envelope(req, res, next) {
+    var useEnvelope = res.envelope
+    if (isToggled(useEnvelope, req.query['envelope'])) useEnvelope = !useEnvelope
+
+    if (useEnvelope && res.locals.json) {
+        var envelope = {}
+        var type = res.locals.singular
+        if (res.locals.json instanceof Array) type = res.locals.plural
+        envelope[type] = res.locals.json
+        res.locals.json = envelope
+    }
+    next()
+}
+
+function sendJson(req, res, next) {
+    if (res.locals.json) res.send(res.locals.json)
+    else next()
 }

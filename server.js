@@ -6,20 +6,61 @@ var methodOverride = require('method-override')
 var expressMongodbRest = require('./index')
 var https = require('https')
 var pem = require('pem')
+var fs = require('fs')
+var dotenv = require('dotenv')
+
+dotenv.load()
 
 var port = normalizePort(process.env.PORT || '3000')
 
-var app = express()
-app.use(compress())
-app.use(methodOverride())
-app.use('/api/v1', expressMongodbRest.Router('mongodb://localhost:27017/mydb'))
-app.set('port', port)
-app.set('json spaces', 2)
+try {
+    if (process.env.PFX) {
+        var options = {
+            pfx: fs.readFileSync(process.env.PFX),
+            passphrase: process.env.PASSPHRASE,
+            ciphers: 'ECDHE-RSA-AES256-SHA:AES256-SHA:RC4-SHA:RC4:HIGH:!MD5:!aNULL:!EDH:!AESGCM',
+            honorCipherOrder: true
+        }
+        createServer(options, port)
+    } else if (process.env.KEY || process.env.CERT) {
+        if (!process.env.KEY) throw 'CERT defined, but KEY is not'
+        if (!process.env.CERT) throw 'KEY defined, but CERT is not'
+        var options = {
+            key: fs.readFileSync(process.env.KEY),
+            cert: fs.readFileSync(process.env.CERT),
+            passphrase: process.env.PASSPHRASE,
+            ciphers: 'ECDHE-RSA-AES256-SHA:AES256-SHA:RC4-SHA:RC4:HIGH:!MD5:!aNULL:!EDH:!AESGCM',
+            honorCipherOrder: true
+        }
+        createServer(options, port)
+    } else {
+        pem.createCertificate({days: 9999, selfSigned: true}, function (err, keys) {
+            var options = {
+                key: keys.serviceKey,
+                cert: keys.certificate,
+                ciphers: 'ECDHE-RSA-AES256-SHA:AES256-SHA:RC4-SHA:RC4:HIGH:!MD5:!aNULL:!EDH:!AESGCM',
+                honorCipherOrder: true
+            }
+            if (err) throw (err)
+            createServer(options, port)
+        })
+    }
+} catch (err) {
+    console.error(err.message || err)
+}
 
-pem.createCertificate({days: 9999, selfSigned: true}, createServer)
+function createServer(options, port) {
+    var app, server
 
-function createServer(err, keys) {
-    var server = https.createServer({key: keys.serviceKey, cert: keys.certificate}, app)
+    app = express()
+    app.use(compress())
+    app.use(methodOverride())
+    app.use('/api/v1', expressMongodbRest('mongodb://localhost:27017/mydb'))
+    app.set('port', port)
+    app.set('json spaces', 2)
+    app.set('query parser', 'simple')
+
+    server = https.createServer(options, app)
     server.listen(port, function() {
         var addr = server.address()
         var bind = (typeof addr === 'string') ? 'pipe ' + addr : 'port ' + addr.port
@@ -38,16 +79,14 @@ function normalizePort(val) {
 function onError(err) {
     if (err.syscall !== 'listen') throw err
 
-    var bind = (typeof port === 'string') ? 'Pipe ' + port : 'Port ' + port
+    var bind = (typeof port === 'string') ? 'pipe ' + port : 'port ' + port
 
     switch (err.code) {
         case 'EACCES':
-            console.error(bind + ' requires elevated privileges')
-            process.exit(1)
+            console.error('EACCESS, ' + bind + ' requires elevated privileges')
             break;
         case 'EADDRINUSE':
-            console.error(bind + ' is already in use')
-            process.exit(1)
+            console.error('EADDRINUSE, ' + bind + ' is already in use')
             break;
         default:
             throw err
