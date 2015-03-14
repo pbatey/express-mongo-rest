@@ -107,7 +107,7 @@ The envelope for query results uses the collection name (and assumes it is plura
 ```
 
 ### Best Practices
-The server script was strongly influenced by [these]{http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api} [articles](http://blog.mwaysolutions.com/2014/06/05/10-best-practices-for-better-restful-api/) about best practices for RESTful APIs.
+The server script was strongly influenced by [these](http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api) [articles](http://blog.mwaysolutions.com/2014/06/05/10-best-practices-for-better-restful-api/) about best practices for RESTful APIs.
 
 Here's the list of recommendations from those articles. Items not yet supported are ~~struck-through~~:
 
