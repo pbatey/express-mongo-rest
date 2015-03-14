@@ -1,5 +1,5 @@
 # express-mongodb-rest
-Node.js package to create an express middleware for a generic, mongodb-backed, RESTful API
+Node.js package to create an express middleware for a mongodb-backed, RESTful API
 
 ```
 var express = require('express')
@@ -24,11 +24,6 @@ The middleware is schema-agnostic, allowing any json document to be persisted an
 | /:collection/:id | PUT    | Create or update a document |
 | /:collection/:id | PATCH  | Update fields in a document (uses [jsonpatch-to-mongodb](https://www.npmjs.com/package/jsonpatch-to-mongodb))) |
 | /:collection/:id | DELETE | Remove a single document    |
-
-## Install
-```
-$ npm install express-mongodb-rest
-```
 
 ## API
 ### expressMongoDbRest(db, options)
