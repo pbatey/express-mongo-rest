@@ -1,5 +1,5 @@
 # express-mongodb-rest
-Node.js package to create an express route for a generic, mongodb-backed, RESTful API
+Node.js package to create an express middleware for a generic, mongodb-backed, RESTful API
 
 ```
 var express = require('express')
@@ -10,6 +10,20 @@ var server = app.listen(3000, function () {
     console.log('Listening on Port', server.address().port)
 })
 ```
+The middleware is schema-agnostic, allowing any json document to be persisted and retrieved from mongo.
+
+| Route            | Method | Notes                       |
+| ---------------- | ------ | --------------------------- |
+| /:collection     | GET    | Search the collection (uses [query-to-mongodb](https://www.npmjs.com/package/query-to-mongodb)) |
+| /:collection     | POST   | Create a single document    |
+| /:collection     | PUT    | Method Not Allowed          |
+| /:collection     | PATCH  | Method Not Allowed          |
+| /:collection     | DELETE | Remove all documents        |
+| /:collection/:id | GET    | Retrieve a single document  |
+| /:collection/:id | POST   | Method Not Allowed          |
+| /:collection/:id | PUT    | Create or update a document |
+| /:collection/:id | PATCH  | Update fields in a document (uses [jsonpatch-to-mongodb](https://www.npmjs.com/package/jsonpatch-to-mongodb))) |
+| /:collection/:id | DELETE | Remove a single document    |
 
 ## Install
 ```
@@ -22,11 +36,10 @@ Create an express middleware that implements a RESTful API.
 
 #### options:
 * **envelope** Return responses wrapped in a type envelope. This can be overriden per request by specifying an _envelope_ query parameter.
-* **singularize** A function to change the collection name into it's singlur form (ie., f('users') => user). Used when returning a envelope for a single instance. Default is [inflection](https://www.npmjs.com/package/inflection).singularize.
-* **validator** A middleware to validate the request. Added to the middleware before the REST methods. Default is none.
+* **singularize** A function to change the collection name into it's singlur form (ie., 'users' becomes 'user'). Used when returning a envelope for a single instance. Default is [inflection.singularize](https://www.npmjs.com/package/inflection).
 
 ## Use
-The `npm start` script starts an https server.
+I wanted to make it extremely simple to start a schema-agnostic https server, so `npm start` script starts one.
 
 You can configure the following options in the .env file (uses [dotenv](https://www.npmjs.com/package/dotenv)):
 * **PORT** The port to listen on. Default is 3000.
@@ -36,26 +49,41 @@ You can configure the following options in the .env file (uses [dotenv](https://
 If neither of PFX or a KEY/CERT pair are specified, a self-sigend certificate and key is generated.
 
 ### GET /:collection
+Search the collection.
+
 ### POST /:collection
+Create a single document.
+
 ### DELETE /:collection
+Remove all documents within the collection.
 
 ### GET /:collection/:id
-### PUT /:collection/:id
-### PATCH /:collection/:id
-### DELETE /:collection/:id
+Retrieve a single document.
 
-This package was inspired by [these]{http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api} [articles](http://blog.mwaysolutions.com/2014/06/05/10-best-practices-for-better-restful-api/) about best practices for RESTful APIs.
+### PUT /:collection/:id
+Create or update a single document.
+
+### PATCH /:collection/:id
+Update fields in a document.
+
+### DELETE /:collection/:id
+Remove a single document.
+
+### Returning result envelopes
+
+### Best Practices
+The server script was strongly influenced by [these]{http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api} [articles](http://blog.mwaysolutions.com/2014/06/05/10-best-practices-for-better-restful-api/) about best practices for RESTful APIs.
 
 Here's the list of recommendations from those articles. Items not yet supported are ~~struck-through~~:
-1. Use nouns but no verbs
-2. GET method and query parameters should not alter the state
-3. Use SSL everywhere
-4. ~~Have great documentation~~
-5. Use plural nouns
-6. ~~Use sub-resources for relations~~
-7. ~~Provide a way to autoload related resource representations~~
-8. Use HTTP headers for serialization formats
-9. ~~Use HATEOAS~~
+1.  Use nouns but no verbs
+2.  GET method and query parameters should not alter the state
+3.  Use SSL everywhere
+4.  ~~Have great documentation~~
+5.  Use plural nouns
+6.  ~~Use sub-resources for relations~~
+7.  ~~Provide a way to autoload related resource representations~~
+8.  Use HTTP headers for serialization formats
+9.  ~~Use HATEOAS~~
 10. Provider filtering, sorting, field selection and paging for collections
     * Filtering
     * Sorting
