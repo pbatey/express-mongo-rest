@@ -39,7 +39,7 @@ Create an express middleware that implements a RESTful API.
 * **singularize** A function to change the collection name into it's singlur form (ie., 'users' becomes 'user'). Used when returning a envelope for a single instance. Default is [inflection.singularize](https://www.npmjs.com/package/inflection).
 
 ## Use
-I wanted to make it extremely simple to start a schema-agnostic https server, so `npm start` script starts one.
+I wanted to make it extremely simple to start a mongo-backed rest server, so `npm start` starts one. The `server.js` script employs many best-practices for rest servers such as using https, gzip, and method overrides.
 
 You can configure the following options in the .env file (uses [dotenv](https://www.npmjs.com/package/dotenv)):
 * **PORT** The port to listen on. Default is 3000.
@@ -48,33 +48,74 @@ You can configure the following options in the .env file (uses [dotenv](https://
 * **CERT** Certificate, to use for SSL. Default is none.
 If neither of PFX or a KEY/CERT pair are specified, a self-sigend certificate and key is generated.
 
-### GET /:collection
-Search the collection.
+### Querying documents
+The query API (GET /:collection) uses a robust query syntax that interprets comparision operators (=, !=, >, <, >=, <=) in the query portion of the URL using [query-to-mongodb](https://www.npmjs.com/package/query-to-mongodb).
 
-### POST /:collection
-Create a single document.
+For example, the URL `https://localhost/api/v1/users?firstName=John&age>=21` would search the _users_ collection for any entries that have a _firstName_ of "John" and an _age_ greater than or equal to 21.
 
-### DELETE /:collection
-Remove all documents within the collection.
+### Patching documents
+The patch document API (PATCH /:collection/:id) will update fields within a document. The API expects a JSON patch payload as defined in [RFC 6902](https://tools.ietf.org/html/rfc6902). The API uses [jsonpatch-to-mongodb](https://www.npmjs.com/package/jsonpatch-to-mongodb) to interpret the patch.
 
-### GET /:collection/:id
-Retrieve a single document.
-
-### PUT /:collection/:id
-Create or update a single document.
-
-### PATCH /:collection/:id
-Update fields in a document.
-
-### DELETE /:collection/:id
-Remove a single document.
+An example patch using jQuery:
+```
+$.ajax('https://localhost/api/v1/users/2d0aa7b0-cf14-413e-9093-7bbba4f4b220', {
+  method: 'PATCH',
+  contentType: 'application/json',
+  data: JSON.stringify([
+    { op: 'replace', path: '/firstName', value: 'Johnathan' },
+    { op: 'replace', path: '/age', value: 22 }
+  ]),
+  success: function (data, status, xhr) {...},
+  error: function (xhr, status, err) {...}
+})
+```
 
 ### Returning result envelopes
+The APIs that return results (all except DELETE) can be set to wrap those results in a type envelope; either server-wide by specifying the _envelope_ option when creating the middleware, or per request by including an _envelope_ query paramter in the URL.
+
+The type envelope will use the singularized name of the collection. The singularizer can be specified using the _singularize_ option when creating the middleware. The default is [inflection.singularize](https://www.npmjs.com/package/inflection).
+
+For example `https://localhost/api/v1/users/2d0aa7b0-cf14-413e-9093-7bbba4f4b220?envelope=true` returns:
+```
+{
+  user: {
+    id: '2d0aa7b0-cf14-413e-9093-7bbba4f4b220',
+    firstName: 'John',
+    age: 21
+  }
+}
+```
+and `https://localhost/api/v1/users/2d0aa7b0-cf14-413e-9093-7bbba4f4b220?envelope=false` returns:
+```
+{
+  id: '2d0aa7b0-cf14-413e-9093-7bbba4f4b220',
+  firstName: 'John',
+  age: 21
+}
+```
+The envelope for query results uses the collection name (and assumes it is plural); `https://localhost/api/v1/users?envelope=true` returns:
+```
+{
+  users: [
+    {
+      id: '2d0aa7b0-cf14-413e-9093-7bbba4f4b220',
+      firstName: 'John',
+      age: 21
+    },
+    {
+      id: 'abf445fd-04db-495e-82f7-77fbf369f7ee',
+      firstName: 'Bob',
+      age: 28
+    }
+  ]
+}
+```
 
 ### Best Practices
 The server script was strongly influenced by [these]{http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api} [articles](http://blog.mwaysolutions.com/2014/06/05/10-best-practices-for-better-restful-api/) about best practices for RESTful APIs.
 
 Here's the list of recommendations from those articles. Items not yet supported are ~~struck-through~~:
+
 1.  Use nouns but no verbs
 2.  GET method and query parameters should not alter the state
 3.  Use SSL everywhere
