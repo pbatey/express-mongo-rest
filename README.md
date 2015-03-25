@@ -37,11 +37,18 @@ Create an express middleware that implements a RESTful API.
 I wanted to make it extremely simple to start a mongo-backed rest server, so `npm start` starts one. The `server.js` script employs many best-practices for rest servers such as using https, gzip, and method overrides.
 
 You can configure the following options in the .env file (uses [dotenv](https://www.npmjs.com/package/dotenv)):
+* **DB** The url for the mongo database. Default is `mongodb://localhost:27017/express-rest-mongo`.
 * **PORT** The port to listen on. Default is 3000.
 * **PFX** Certificate, Private key and CA certficiates to use for SSL. Default is none.
 * **KEY** Private key to use for SSL. Default is none.
 * **CERT** Certificate, to use for SSL. Default is none.
 If neither of PFX or a KEY/CERT pair are specified, a self-sigend certificate and key is generated.
+
+#### Running the server
+Requires 
+```
+
+```
 
 ### Querying documents
 The query API (GET /:collection) uses a robust query syntax that interprets comparision operators (=, !=, >, <, >=, <=) in the query portion of the URL using [query-to-mongo](https://www.npmjs.com/package/query-to-mongo).
