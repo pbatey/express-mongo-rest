@@ -2,7 +2,7 @@ var express = require('express')
 var mongoskin = require('mongoskin')
 var ObjectID = require('mongodb').ObjectID
 var patch2m = require('jsonpatch-to-mongodb')
-var query2m = require('query-to-mongodb')
+var query2m = require('query-to-mongo')
 var bodyParser = require('body-parser')
 var inflector = require('inflection')
 
@@ -10,7 +10,7 @@ module.exports = function expressMongodbRest(db, options) {
     var router
 
     if (!db) throw new TypeError('db required')
-    if (typeof db === 'string') db = mongoskin.db(db)
+    if (typeof db === 'string') db = mongoskin.db(db, {safe: true})
     options = options || {}
 
     router = express.Router()

@@ -24,18 +24,18 @@ function createApp(db) {
 describe('express-rest-mongo', function () {
     var app, db
 
-    app = createApp('mongodb://localhost:27017/express-rest-monog-test')
+    app = createApp('mongodb://localhost:27017/express-rest-mongo-test')
     db = app.db
     db.bind('users')
 
     after(function (done) {
-        db.dropDatabase()
-        db.close(done)
+        db.dropDatabase(function (err) { db.close(done) })
     })
 
     describe('/:collection', function () {
         beforeEach(function (done) {
-            db.users.remove({}, null, function () {
+            db.users.remove({}, null, function (err) {
+                if (err) throw done(err)
                 var list = [{_id:'0001', name:'Bob', email:'bob@example.com'}, {name:'Judy', email:'judy@example.com'}]
                 db.users.insert(list, null, done)
             })
@@ -46,8 +46,8 @@ describe('express-rest-mongo', function () {
                 request(app).get('/api/v1/users')
                     .expect(200)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.equal(result.length, 2)
                         assert.equal(res.headers['x-total-count'], 2)
                         assert.notOk(result[0]._id, 'do not expect _id')
@@ -61,7 +61,7 @@ describe('express-rest-mongo', function () {
                 request(app).get('/api/v1/users?name=Bob')
                     .expect(200)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.equal(result.length, 1)
                         assert.equal(res.headers['x-total-count'], 1)
@@ -75,7 +75,7 @@ describe('express-rest-mongo', function () {
                 request(app).get('/api/v1/users?name=None')
                     .expect(200)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.equal(result.length, 0)
                         assert.equal(res.headers['x-total-count'], 0)
@@ -86,7 +86,7 @@ describe('express-rest-mongo', function () {
                 request(app).get('/api/v1/users?name=Bob&envelope=true')
                     .expect(200)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.equal(res.headers['x-total-count'], 1)
                         assert.ok(result.users, 'expect envelope')
@@ -106,8 +106,8 @@ describe('express-rest-mongo', function () {
                     .send({name:'Carl', email:'carl@example.com'})
                     .expect(201)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.notOk(result._id, 'do not expect _id')
                         assert.ok(result.id, 'expect id')
                         done()
@@ -119,7 +119,7 @@ describe('express-rest-mongo', function () {
                     .expect(400)
                     .send()
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         done()
                     })
             })
@@ -129,8 +129,8 @@ describe('express-rest-mongo', function () {
                     .send({name:'Carl', email:'carl@example.com'})
                     .expect(201)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.ok(result.user, 'expect envelope')
                         assert.notOk(result.user._id, 'do not expect _id')
                         assert.ok(result.user.id, 'expect id')
@@ -146,7 +146,7 @@ describe('express-rest-mongo', function () {
                     .send({name:'Carl', email:'carl@example.com'})
                     .expect(405)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         done()
                     })
             })
@@ -162,7 +162,7 @@ describe('express-rest-mongo', function () {
                     ])
                     .expect(405)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         done()
                     })
             })
@@ -176,7 +176,7 @@ describe('express-rest-mongo', function () {
                         .set('Content-Type', 'application/json')
                         .expect(204)
                         .end(function(err, res) {
-                            if (err) throw err
+                            if (err) return done(err)
                             db.users.count({}, function (e, result) {
                                 assert.equal(result, 0);
                                 done()
@@ -200,7 +200,7 @@ describe('express-rest-mongo', function () {
                 request(app).get('/api/v1/users/0001')
                     .expect(200)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.notOk(result._id, 'do not expect _id')
                         assert.equal(result.id, '0001')
@@ -214,7 +214,7 @@ describe('express-rest-mongo', function () {
                     request(app).get('/api/v1/users/' + id)
                         .expect(200)
                         .end(function(err, res) {
-                            if (err) throw err
+                            if (err) return done(err)
                             var result = JSON.parse(res.text)
                             assert.notOk(result._id, 'do not expect _id')
                             assert.equal(result.id, id)
@@ -227,7 +227,7 @@ describe('express-rest-mongo', function () {
                 request(app).get('/api/v1/users/none')
                     .expect(404)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         done()
                     })
             })
@@ -235,7 +235,7 @@ describe('express-rest-mongo', function () {
                 request(app).get('/api/v1/users/0001?envelope=true')
                     .expect(200)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.ok(result.user, 'expect envelope')
                         assert.notOk(result.user._id, 'do not expect _id')
@@ -253,7 +253,7 @@ describe('express-rest-mongo', function () {
                     .expect(405)
                     .send()
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         done()
                     })
             })
@@ -266,8 +266,8 @@ describe('express-rest-mongo', function () {
                     .send({name:'Bobby', email:'bobby@example.com'})
                     .expect(200)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.equal(result.id, '0001')
                         assert.notOk(result._id);
                         db.users.findOne({_id: '0001'}, function (e, result) {
@@ -284,8 +284,8 @@ describe('express-rest-mongo', function () {
                         .send({name:'Judith', email:'judith@example.com'})
                         .expect(200)
                         .end(function(err, res) {
+                            if (err) return done(err)
                             var result = JSON.parse(res.text)
-                            if (err) throw err
                             assert.notOk(result._id, 'do not expect _id')
                             assert.equal(result.id, id)
                             db.users.findOne({_id: id}, function (e, result) {
@@ -301,8 +301,8 @@ describe('express-rest-mongo', function () {
                     .send({name:'Carl', email:'carl@example.com'})
                     .expect(200)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.notOk(result._id, 'do not expect _id')
                         assert.equal(result.id, '0002')
                         db.users.findOne({_id: '0002'}, function (e, result) {
@@ -317,7 +317,7 @@ describe('express-rest-mongo', function () {
                     .expect(400)
                     .send()
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         done()
                     })
             })
@@ -327,8 +327,8 @@ describe('express-rest-mongo', function () {
                     .send({name:'Bobby', email:'bobby@example.com'})
                     .expect(200)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.ok(result.user, 'expect envelope')
                         assert.equal(result.user.id, '0001')
                         assert.notOk(result.user._id);
@@ -350,8 +350,8 @@ describe('express-rest-mongo', function () {
                     ])
                     .expect(200)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.notOk(result._id, 'do not expect _id')
                         assert.equal(result.id, '0001')
                         db.users.findOne({_id: '0001'}, function (e, result) {
@@ -369,8 +369,8 @@ describe('express-rest-mongo', function () {
                     ])
                     .expect(200)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.ok(result.user, 'expect envelope')
                         assert.notOk(result.user._id, 'do not expect _id')
                         assert.equal(result.user.id, '0001')
@@ -391,7 +391,7 @@ describe('express-rest-mongo', function () {
                         .set('Content-Type', 'application/json')
                         .expect(204)
                         .end(function(err, res) {
-                            if (err) throw err
+                            if (err) return done(err)
                             db.users.count({name: 'Bob'}, function (e, result) {
                                 assert.equal(result, 0);
                                 done()
@@ -407,7 +407,7 @@ describe('express-rest-mongo', function () {
                     request(app).delete('/api/v1/users/' + id)
                         .expect(204)
                         .end(function(err, res) {
-                            if (err) throw err
+                            if (err) return done(err)
                             db.users.count({name: 'Judy'}, function (e, result) {
                                 assert.equal(result, 0);
                                 done()

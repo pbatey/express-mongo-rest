@@ -1,9 +1,9 @@
-# express-mongodb-rest
-Node.js package to create an express middleware for a mongodb-backed, RESTful API
+# express-mongo-rest
+Node.js package to create an express middleware for a mongo-backed, RESTful API
 
 ```
 var express = require('express')
-var expressMongodbRest = require('express-mongodb-rest')
+var expressMongodbRest = require('express-mongo-rest')
 var app = express()
 app.use('/api/v1', expressMongodbRest('mongodb://localhost:27017/mydb'))
 var server = app.listen(3000, function () {
@@ -14,7 +14,7 @@ The middleware is schema-agnostic, allowing any json document to be persisted an
 
 | Route            | Method | Notes                       |
 | ---------------- | ------ | --------------------------- |
-| /:collection     | GET    | Search the collection (uses [query-to-mongodb](https://www.npmjs.com/package/query-to-mongodb)) |
+| /:collection     | GET    | Search the collection (uses [query-to-mongo](https://www.npmjs.com/package/query-to-mongo)) |
 | /:collection     | POST   | Create a single document    |
 | /:collection     | PUT    | Method Not Allowed          |
 | /:collection     | PATCH  | Method Not Allowed          |
@@ -44,7 +44,7 @@ You can configure the following options in the .env file (uses [dotenv](https://
 If neither of PFX or a KEY/CERT pair are specified, a self-sigend certificate and key is generated.
 
 ### Querying documents
-The query API (GET /:collection) uses a robust query syntax that interprets comparision operators (=, !=, >, <, >=, <=) in the query portion of the URL using [query-to-mongodb](https://www.npmjs.com/package/query-to-mongodb).
+The query API (GET /:collection) uses a robust query syntax that interprets comparision operators (=, !=, >, <, >=, <=) in the query portion of the URL using [query-to-mongo](https://www.npmjs.com/package/query-to-mongo).
 
 For example, the URL `https://localhost/api/v1/users?firstName=John&age>=21` would search the _users_ collection for any entries that have a _firstName_ of "John" and an _age_ greater than or equal to 21.
 

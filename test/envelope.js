@@ -24,18 +24,18 @@ function createApp(db, options) {
 describe('express-rest-mongo {envelope:true}', function () {
     var app, db
 
-    app = createApp('mongodb://localhost:27017/express-rest-monog-test', {envelope:true})
+    app = createApp('mongodb://localhost:27017/express-rest-mongo-test', {envelope:true})
     db = app.db
     db.bind('users')
 
     after(function (done) {
-        db.dropDatabase()
-        db.close(done)
+        db.dropDatabase(function (err) { db.close(done) })
     })
 
     describe('/:collection', function () {
         beforeEach(function (done) {
-            db.users.remove({}, null, function () {
+            db.users.remove({}, null, function (err) {
+                if (err) return done(err)
                 var list = [{_id:'0001', name:'Bob', email:'bob@example.com'}, {name:'Judy', email:'judy@example.com'}]
                 db.users.insert(list, null, done)
             })
@@ -46,7 +46,7 @@ describe('express-rest-mongo {envelope:true}', function () {
                 request(app).get('/api/v1/users')
                     .expect(200)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.ok(result.users, 'expect envelope')
                         assert.equal(res.headers['x-total-count'], 2)
@@ -62,7 +62,7 @@ describe('express-rest-mongo {envelope:true}', function () {
                 request(app).get('/api/v1/users?name=Bob')
                     .expect(200)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.ok(result.users, 'expect envelope')
                         assert.equal(result.users.length, 1)
@@ -77,7 +77,7 @@ describe('express-rest-mongo {envelope:true}', function () {
                 request(app).get('/api/v1/users?name=None')
                     .expect(200)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.ok(result.users, 'expect envelope')
                         assert.equal(result.users.length, 0)
@@ -89,7 +89,7 @@ describe('express-rest-mongo {envelope:true}', function () {
                 request(app).get('/api/v1/users?name=Bob&envelope=false')
                     .expect(200)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.notOk(result.users, 'expect no envelope')
                         assert.equal(result.length, 1)
@@ -109,7 +109,7 @@ describe('express-rest-mongo {envelope:true}', function () {
                     .send({name:'Carl', email:'carl@example.com'})
                     .expect(201)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.ok(result.user, 'expect envelope')
                         assert.notOk(result.user._id, 'do not expect _id')
@@ -123,7 +123,7 @@ describe('express-rest-mongo {envelope:true}', function () {
                     .send({name:'Carl', email:'carl@example.com'})
                     .expect(201)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.notOk(result.user, 'expect no envelope')
                         assert.notOk(result._id, 'do not expect _id')
@@ -147,7 +147,7 @@ describe('express-rest-mongo {envelope:true}', function () {
                 request(app).get('/api/v1/users/0001')
                     .expect(200)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.ok(result.user, 'expect envelope')
                         assert.notOk(result.user._id, 'do not expect _id')
@@ -160,7 +160,7 @@ describe('express-rest-mongo {envelope:true}', function () {
                 request(app).get('/api/v1/users/0001?envelope=false')
                     .expect(200)
                     .end(function(err, res) {
-                        if (err) throw err
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
                         assert.notOk(result.user, 'expect no envelope')
                         assert.notOk(result._id, 'do not expect _id')
@@ -178,8 +178,8 @@ describe('express-rest-mongo {envelope:true}', function () {
                     .send({name:'Bobby', email:'bobby@example.com'})
                     .expect(200)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.ok(result.user, 'expect envelope')
                         assert.equal(result.user.id, '0001')
                         assert.notOk(result.user._id);
@@ -195,8 +195,8 @@ describe('express-rest-mongo {envelope:true}', function () {
                     .send({name:'Carl', email:'carl@example.com'})
                     .expect(200)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.ok(result.user, 'expect envelope')
                         assert.notOk(result.user._id, 'do not expect _id')
                         assert.equal(result.user.id, '0002')
@@ -212,8 +212,8 @@ describe('express-rest-mongo {envelope:true}', function () {
                     .send({name:'Bobby', email:'bobby@example.com'})
                     .expect(200)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.notOk(result.user, 'expect no envelope')
                         assert.equal(result.id, '0001')
                         assert.notOk(result._id);
@@ -235,8 +235,8 @@ describe('express-rest-mongo {envelope:true}', function () {
                     ])
                     .expect(200)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.ok(result.user, 'expect envelope')
                         assert.notOk(result.user._id, 'do not expect _id')
                         assert.equal(result.user.id, '0001')
@@ -255,8 +255,8 @@ describe('express-rest-mongo {envelope:true}', function () {
                     ])
                     .expect(200)
                     .end(function(err, res) {
+                        if (err) return done(err)
                         var result = JSON.parse(res.text)
-                        if (err) throw err
                         assert.notOk(result.user, 'expect no envelope')
                         assert.notOk(result._id, 'do not expect _id')
                         assert.equal(result.id, '0001')
