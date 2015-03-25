@@ -22,7 +22,7 @@ The middleware is schema-agnostic, allowing any json document to be persisted an
 | /:collection/:id | GET    | Retrieve a single document  |
 | /:collection/:id | POST   | Method Not Allowed          |
 | /:collection/:id | PUT    | Create or update a document |
-| /:collection/:id | PATCH  | Update fields in a document (uses [jsonpatch-to-mongodb](https://www.npmjs.com/package/jsonpatch-to-mongodb))) |
+| /:collection/:id | PATCH  | Update fields in a document (uses [jsonpatch-to-mongodb](https://www.npmjs.com/package/jsonpatch-to-mongodb)) |
 | /:collection/:id | DELETE | Remove a single document    |
 
 ## API
