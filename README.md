@@ -44,12 +44,6 @@ You can configure the following options in the .env file (uses [dotenv](https://
 * **CERT** Certificate, to use for SSL. Default is none.
 If neither of PFX or a KEY/CERT pair are specified, a self-sigend certificate and key is generated.
 
-#### Running the server
-Requires 
-```
-
-```
-
 ### Querying documents
 The query API (GET /:collection) uses a robust query syntax that interprets comparision operators (=, !=, >, <, >=, <=) in the query portion of the URL using [query-to-mongo](https://www.npmjs.com/package/query-to-mongo).
 
