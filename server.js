@@ -12,7 +12,7 @@ var dotenv = require('dotenv')
 dotenv.load()
 
 var port = normalizePort(process.env.PORT || '3000')
-var db = process.env.DB || 'mongodb://localhost:27017/express-rest-mongo'
+var db = process.env.DB || 'mongodb://localhost:27017/express-mongo-rest'
 
 // recommended to mitigate against BEAST attack (see https://community.qualys.com/blogs/securitylabs/2011/10/17/mitigating-the-beast-attack-on-tls)
 var ciphers = 'ECDHE-RSA-AES128-SHA256:AES128-GCM-SHA256:RC4:HIGH:!MD5:!aNULL:!EDH'
