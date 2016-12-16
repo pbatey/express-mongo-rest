@@ -84,9 +84,9 @@ function addRestMethods(router, singularize) {
         if (!req.body || isEmpty(req.body)) throw { status: 400, message: 'No Request Body' } // Bad Request
         req.collection.insert(req.body, function (e, result) {
             if (e) return next(e)
-            res.append('Location', fullUrl(req) + '/' + result[0]._id)
+            res.append('Location', fullUrl(req) + '/' + result.ops[0]._id)
             res.status(201) // Created
-            res.locals.json = result[0]
+            res.locals.json = result.ops[0]
             next()
         })
     })
