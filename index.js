@@ -16,6 +16,9 @@ module.exports = function expressMongodbRest(db, options) {
     router = express.Router()
     router.db = db
 
+    router.use(bodyParser.urlencoded({
+        extended: true
+    }))
     router.use(bodyParser.json())
     router.use(function (req, res, next) {
         req.db = router.db
