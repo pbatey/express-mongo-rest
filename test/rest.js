@@ -5,6 +5,8 @@ var mongoskin = require('mongoskin')
 var ObjectID = require('mongodb').ObjectID
 var http = require('http')
 var request = require('supertest')
+var parseLink = require('parse-link-header');
+var faker = require('faker')
 
 function createApp(db) {
     var app = express()
@@ -417,4 +419,123 @@ describe('express-rest-mongo', function () {
             })
         })
     })
+
+    describe('Pagination Tests', function () {
+        beforeEach(function (done) {
+            db.users.remove({}, null, function (err) {
+                if (err) throw done(err)
+                const list = new Array(95).fill(null)
+                                .map(e => e ={ name: faker.fake("{{name.firstName}}"), email: faker.fake("{{internet.email}}")})
+
+                db.users.insert(list, null, done)
+            })
+        })
+
+        describe('if first page (?limit=10)', function () {
+
+            it('should return only next/last', function (done) {
+                request(app).get('/api/v1/users?limit=10')
+                    .expect(200)
+                    .end(function(err, res) {
+                        if (err) return done(err)
+
+                        var result = JSON.parse(res.text)
+                        
+                        assert.equal(result.length, 10)
+                        assert.equal(res.headers['x-total-count'], 95)
+
+                        assert.ok(res.headers['link'], 'expect link')
+
+                        var link = parseLink(res.headers['link'])
+
+
+                        assert.notOk(link['first'], 'do not expect first')
+                        assert.notOk(link['prev'], 'do not expect prev')
+                        assert.ok(link['next'], 'expect next')
+                        assert.ok(link['last'], 'expect last')
+                        
+                        assert.equal(link['next']['limit'], 10, 'next.limit')
+                        assert.equal(link['next']['offset'], 10, 'next.offset')
+
+                        assert.equal(link['last']['limit'], 10, 'last.limit')
+                        assert.equal(link['last']['offset'], 90, 'last.offset')
+
+                        done()
+                    })
+            })
+        })
+
+        describe('if second page (?limit=10&offset=10)', function () {
+
+            it('should return all links', function (done) {
+                request(app).get('/api/v1/users?limit=10&offset=10')
+                    .expect(200)
+                    .end(function(err, res) {
+                        if (err) return done(err)
+
+                        var result = JSON.parse(res.text)
+                        
+                        assert.equal(result.length, 10)
+                        assert.equal(res.headers['x-total-count'], 95)
+
+                        assert.ok(res.headers['link'], 'expect link')
+
+                        var link = parseLink(res.headers['link'])
+
+                        assert.ok(link['first'], 'expect first')
+                        assert.ok(link['prev'], 'expect prev')
+                        assert.ok(link['next'], 'expect next')
+                        assert.ok(link['last'], 'expect last')
+
+                        assert.equal(link['first']['limit'], 10, 'next.limit')
+                        assert.equal(link['first']['offset'], 0, 'next.offset')
+
+                        assert.equal(link['prev']['limit'], 10, 'next.limit')
+                        assert.equal(link['prev']['offset'], 0, 'next.offset')
+
+                        assert.equal(link['next']['limit'], 10, 'next.limit')
+                        assert.equal(link['next']['offset'], 20, 'next.offset')
+
+                        assert.equal(link['last']['limit'], 10, 'last.limit')
+                        assert.equal(link['last']['offset'], 90, 'last.offset')
+
+                        done()
+                    })
+            })
+        })
+
+        describe('if last page (?limit=10&offset=90)', function () {
+
+            it('should return only first/prev', function (done) {
+                request(app).get('/api/v1/users?limit=10&offset=90')
+                    .expect(200)
+                    .end(function(err, res) {
+                        if (err) return done(err)
+
+                        var result = JSON.parse(res.text)
+                        
+                        assert.equal(result.length, 5)
+                        assert.equal(res.headers['x-total-count'], 95)
+
+                        assert.ok(res.headers['link'], 'expect link')
+
+                        var link = parseLink(res.headers['link'])
+
+                        assert.ok(link['first'], 'expect first')
+                        assert.ok(link['prev'], 'expect prev')
+                        assert.notOk(link['next'], 'do not expect next')
+                        assert.notOk(link['last'], 'do not expect last')
+
+                        assert.equal(link['first']['limit'], 10, 'next.limit')
+                        assert.equal(link['first']['offset'], 0, 'next.offset')
+
+                        assert.equal(link['prev']['limit'], 10, 'last.limit')
+                        assert.equal(link['prev']['offset'], 80, 'last.offset')
+
+                        done()
+                    })
+            })
+        })
+    })
+
 })
