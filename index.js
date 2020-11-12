@@ -42,7 +42,7 @@ function isEmpty(obj) {
 }
 
 function fullUrl(req) {
-    return req.protocol + '://' + req.get('host') + req.originalUrl
+        return req.protocol + '://' + req.get('host') + req.baseUrl + req.path
 }
 
 function normalizeId(id) {
