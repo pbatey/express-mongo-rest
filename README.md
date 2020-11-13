@@ -36,6 +36,16 @@ Create an express middleware that implements a RESTful API.
 ## Use
 I wanted to make it extremely simple to start a mongo-backed rest server, so `npm start` starts one. The `server.js` script employs many best-practices for rest servers such as using https, gzip, and method overrides.
 
+To quickly run a mongo instance, I like to use docker
+
+    docker run --rm -d --name mongo -p 27017:27017 mongo:latest
+
+Then you'll need to connect and create the `express-mongo-rest` database.
+
+    docker exec -it mongo mongo
+    > use express-mongo-rest
+    > exit
+
 You can configure the following options in the .env file (uses [dotenv](https://www.npmjs.com/package/dotenv)):
 * **DB** The url for the mongo database. Default is `mongodb://localhost:27017/express-rest-mongo`.
 * **PORT** The port to listen on. Default is 3000.
@@ -140,6 +150,32 @@ Here's the list of recommendations from those articles. Items not yet supported 
 20. ~~Use token based authentication, transported over OAuth2 where delegation is needed~~
 21. ~~Include response headers that facilitate caching~~
 
+Creating a Release
+------------------
+
+1. Ensure all unit tests pass with `npm test`
+2. Use `npm version major|minor|patch` to increment the version in _package.json_ and tag the release
+3. Push the tags `git push origin master --tags`
+4. Publish the release `npm publish ./`
+
+### Major Release
+
+    npm version major
+    git push origin master --tags
+    npm publish ./
+
+### Minor Release (backwards compatible changes)
+
+    npm version minor
+    git push origin master --tags
+    npm publish ./
+
+### Patch Release (bug fix)
+
+    npm version patch
+    git push origin master --tags
+    npm publish ./
+
 ## Todo
 * Address more best-practices in 'server.js'
     * Add schama validation (swagger-spec? json-schema?)
@@ -147,3 +183,4 @@ Here's the list of recommendations from those articles. Items not yet supported 
     * Add user authentication and authorization to API access (node-oauth2-server?)
     * Add rate limiting (express-limiter?)
     * Add OAuth2 (node-oauth2-server?)
+    * Use mongojs instead of mongoskin
