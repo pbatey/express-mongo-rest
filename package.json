@@ -1,6 +1,6 @@
 {
   "name": "express-mongo-rest",
-  "version": "0.1.3",
+  "version": "0.1.2",
   "description": "An mongo-backed RESTful express route.",
   "main": "index.js",
   "repository": {
