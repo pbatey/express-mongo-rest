@@ -15,7 +15,7 @@
     "dotenv": "2.0.0",
     "faker": "^5.1.0",
     "method-override": "^2.3.7",
-    "mocha": "^3.2.0",
+    "mocha": "^10.1.0",
     "morgan": "^1.7.0",
     "parse-link-header": "^1.0.1",
     "pem": "^1.9.4",
